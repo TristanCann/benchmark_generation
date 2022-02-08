@@ -1,6 +1,8 @@
 import numpy as np
+import scipy.special
+import scipy.stats
 
-def generate_badj(p_):
+def generate_benchmark_deg_dist(p_,DIST):
 	
 	if DIST == 'z':
 		# finite m (preferential attachment)
@@ -14,10 +16,11 @@ def generate_badj(p_):
 		F = lambda k: scipy.stats.binom.pmf(k, 1000, 1. * D / 1000)
 	else: raise Exception('invalid distribution')
 	
-	## Set the seed for numpy random.
-	pvec = F(numpy.arange(N_STEPS))
-	pvec[numpy.isnan(pvec)] = 0.
+	## Calculate the probabilities of selecting a given node based on its assigned degree.
+	pvec = F(np.arange(N_STEPS))
+	pvec[np.isnan(pvec)] = 0.
 	pvec /= pvec.sum()
+	
 	degree_vec_L = numpy.random.choice(numpy.arange(N_STEPS), size = N_STEPS, p = pvec)
 	degree_vec_R = numpy.random.choice(numpy.arange(N_STEPS), size = N_STEPS, p = pvec)
 	
@@ -66,3 +69,7 @@ def generate_badj(p_):
 	
 	# load into a sparse matrix
 	return L_node_com_label, R_node_com_label, scipy.sparse.coo_matrix((numpy.ones(edges.shape[0]), (edges[:,0], edges[:,1])), dtype = numpy.int_).astype(numpy.float_).tocsc()
+
+
+if __name__ == 'main':
+	
