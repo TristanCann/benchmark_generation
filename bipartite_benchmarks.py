@@ -82,13 +82,14 @@ def generate_benchmark_deg_dist(p_,DIST,exp_deg,n_vertices,N_COMS):
 	## Return the graph data.
 	return L_node_com_label, R_node_com_label, scipy.sparse.coo_matrix((np.ones(edges.shape[0]), (edges[:,0], edges[:,1])), dtype = np.int_).astype(np.float_).tocsc()
 
-def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_multiple_edges = False):
+def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_multiple_edges=False,file_id=''):
 
 	## Parameters:
 	## community sizes: A list of two lists giving the number of nodes in each community in each mode.
 	## community_prefs: A list of two lists of lists for each community giving the preference of connecting to each community in the other mode. A list of arrays will also work.
 	## n_edges: Integer, the number of edges required in the final graph.
 	## allow_multiple_edges: Boolean, by default we do not allow for multiple edges.
+	## file_id: string, defaults to empty string. Used to label the files generate by this instance of the generator.
 	
 	## Check the parameters are valid.
 	assert len(community_sizes) == 2, 'You need to provide exactly two community size lists'
@@ -101,7 +102,7 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	
 	for m in community_prefs:
 		for c in m:
-			assert c[-1] == 1., 'One of the community preferences does not not some to 1'
+			assert c[-1] == 1., 'One of the community preferences does not not sum to 1'
 			
 	## Make some useful calculations to save time.
 	n_top = sum(community_sizes[0])
@@ -140,15 +141,38 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	## Sample the target nodes from the communities.
 	target_nodes = [np.random.choice(comm_nodes[c]) for c in target_comms]
 	
+	edges = list(zip(source_nodes,target_nodes))
+	
 	## Check for multiple edges if required.
+	if not allow_multiple_edges:
+		while len(edges) != len(set(edges)):
+			seen_pairs = set()
+			for i,e in enumerate(edges):
+				if e in seen_pairs:
+					## We have a duplicate edge, resample it.
+					e = (e[0],np.random.choice(comm_nodes[target_comms[i]]))
+					edges[i] = e
+				
+				seen_pairs.update(e)
 
-	code.interact(local=locals())
+	## Write the generated graph to file.
+	with open('edge_list_%s.txt' % file_id,'w') as f:
+		for e in edges:
+			f.write(','.join(map(str,e)) + '\n')  ## Each line in the edge file is source, target.
+		
+	with open('comm_labels_%s.txt' % file_id,'w') as f:
+		for k in comm_labels:
+			f.write(str(k) + ',' + str(comm_labels[k]) + '\n')  ## Each line in the label file is node id, community label.
+
+## Note here for possible extension to include degree distributions in the edge number version - use this to bias the np.random.choice when selecting nodes for source or target.
 
 if __name__ == '__main__':
 	#l_labels, r_labels, sparse_array = generate_benchmark_deg_dist(0.4, 'b', 4, 100, 5)
-	sizes = [[50,50],[50,50]]
-	prefs = [[[0.7,0.3],[0.3,0.7]],[[0.7,0.3],[0.3,0.7]]]
-	n_edges = 5
+	sizes = [[50,50,50],  ## Top community sizes
+				[50,50]]  ## Bottom community sizes
+	prefs = [[[0.7,0.3],[0.3,0.7],[0.5,0.5]],  ## Preferences for top onto bottom, n_top_comms rows, n_bottom comms columns.
+				[[0.7,0.3],[0.3,0.7]]]  ## Preferences for bottom onto top, shape opposite to above.
+	n_edges = 50
 	
 	generate_benchmark_edge_no(sizes,prefs,n_edges,allow_multiple_edges = False)
 	
