@@ -158,7 +158,7 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	## Write the generated graph to file.
 	with open('edge_list_%s.txt' % file_id,'w') as f:
 		for e in edges:
-			f.write(','.join(map(str,e)) + '\n')  ## Each line in the edge file is source, target.
+			f.write(' '.join(map(str,e)) + '\n')  ## Each line in the edge file is source, target.
 		
 	with open('comm_labels_%s.txt' % file_id,'w') as f:
 		for k in comm_labels:
@@ -172,8 +172,15 @@ if __name__ == '__main__':
 				[50,50]]  ## Bottom community sizes
 	prefs = [[[0.7,0.3],[0.3,0.7],[0.5,0.5]],  ## Preferences for top onto bottom, n_top_comms rows, n_bottom comms columns.
 				[[0.7,0.3],[0.3,0.7]]]  ## Preferences for bottom onto top, shape opposite to above.
-	n_edges = 50
+	n_edges = 5
 	
 	generate_benchmark_edge_no(sizes,prefs,n_edges,allow_multiple_edges = False)
 	
-	code.interact(local=locals())
+	import networkx as nx
+	import matplotlib.pyplot as plt
+	
+	G = nx.read_edgelist('edge_list_.txt')
+	nx.draw(G)
+	plt.show()
+	
+	#code.interact(local=locals())

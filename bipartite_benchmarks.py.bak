@@ -141,6 +141,8 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	## Sample the target nodes from the communities.
 	target_nodes = [np.random.choice(comm_nodes[c]) for c in target_comms]
 	
+	code.interact(local=locals())
+	
 	edges = list(zip(source_nodes,target_nodes))
 	
 	## Check for multiple edges if required.
@@ -158,11 +160,11 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	## Write the generated graph to file.
 	with open('edge_list_%s.txt' % file_id,'w') as f:
 		for e in edges:
-			f.write(','.join(map(str,e)) + '\n')  ## Each line in the edge file is source, target.
+			f.write(' '.join(map(str,e)) + '\n')  ## Each line in the edge file is source, target.
 		
 	with open('comm_labels_%s.txt' % file_id,'w') as f:
 		for k in comm_labels:
-			f.write(int(k) + ',' + int(comm_labels[k]) + '\n')  ## Each line in the label file is node id, community label.
+			f.write(str(k) + ',' + str(comm_labels[k]) + '\n')  ## Each line in the label file is node id, community label.
 
 ## Note here for possible extension to include degree distributions in the edge number version - use this to bias the np.random.choice when selecting nodes for source or target.
 
@@ -172,8 +174,15 @@ if __name__ == '__main__':
 				[50,50]]  ## Bottom community sizes
 	prefs = [[[0.7,0.3],[0.3,0.7],[0.5,0.5]],  ## Preferences for top onto bottom, n_top_comms rows, n_bottom comms columns.
 				[[0.7,0.3],[0.3,0.7]]]  ## Preferences for bottom onto top, shape opposite to above.
-	n_edges = 50
+	n_edges = 5
 	
 	generate_benchmark_edge_no(sizes,prefs,n_edges,allow_multiple_edges = False)
 	
-	code.interact(local=locals())
+	import networkx as nx
+	import matplotlib.pyplot as plt
+	
+	G = nx.read_edgelist('edge_list_.txt')
+	nx.draw(G)
+	plt.show()
+	
+	#code.interact(local=locals())
