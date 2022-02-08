@@ -95,7 +95,7 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	assert len(community_sizes) == 2, 'You need to provide exactly two community size lists'
 	assert len(community_prefs) == 2, 'You need to provide exactly two community preference lists'
 	if not allow_multiple_edges:
-		assert min(sum(community_sizes[0]),sum(community_sizes[1])) >= n_edges, 'n_edges is too high to prevent multiple edges'
+		assert sum(community_sizes[0])*sum(community_sizes[1]) >= n_edges, 'n_edges is too high to prevent multiple edges'
 	
 	## Turn the community preferences into a cumulative sum.
 	community_prefs = [np.array([np.cumsum(c) for c in m]) for m in community_prefs]
@@ -147,13 +147,16 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	if not allow_multiple_edges:
 		while len(edges) != len(set(edges)):
 			seen_pairs = set()
+			duplicates = 0
 			for i,e in enumerate(edges):
 				if e in seen_pairs:
+					duplicates += 1
 					## We have a duplicate edge, resample it.
 					e = (e[0],np.random.choice(comm_nodes[target_comms[i]]))
 					edges[i] = e
 				
-				seen_pairs.update(e)
+				seen_pairs.add(e)
+			print('Updated %d duplicate edges' % duplicates)
 
 	## Write the generated graph to file.
 	with open('edge_list_%s.txt' % file_id,'w') as f:
@@ -168,11 +171,11 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 
 if __name__ == '__main__':
 	#l_labels, r_labels, sparse_array = generate_benchmark_deg_dist(0.4, 'b', 4, 100, 5)
-	sizes = [[50,50,50],  ## Top community sizes
+	sizes = [[50,50],  ## Top community sizes
 				[50,50]]  ## Bottom community sizes
-	prefs = [[[0.7,0.3],[0.3,0.7],[0.5,0.5]],  ## Preferences for top onto bottom, n_top_comms rows, n_bottom comms columns.
-				[[0.7,0.3],[0.3,0.7]]]  ## Preferences for bottom onto top, shape opposite to above.
-	n_edges = 5
+	prefs = [[[0.9,0.1],[0.1,0.9]],  ## Preferences for top onto bottom, n_top_comms rows, n_bottom comms columns.
+				[[0.9,0.1],[0.1,0.9]]]  ## Preferences for bottom onto top, shape opposite to above.
+	n_edges = 200
 	
 	generate_benchmark_edge_no(sizes,prefs,n_edges,allow_multiple_edges = False)
 	
