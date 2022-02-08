@@ -97,7 +97,7 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 		assert min(sum(community_sizes[0]),sum(community_sizes[1])) >= n_edges, 'n_edges is too high to prevent multiple edges'
 	
 	## Turn the community preferences into a cumulative sum.
-	community_prefs = [[np.cumsum(c) for c in m] for m in community_prefs]
+	community_prefs = [np.array([np.cumsum(c) for c in m]) for m in community_prefs]
 	
 	for m in community_prefs:
 		for c in m:
@@ -106,10 +106,41 @@ def generate_benchmark_edge_no(community_sizes,community_prefs,n_edges,allow_mul
 	## Make some useful calculations to save time.
 	n_top = sum(community_sizes[0])
 	n_bottom = sum(community_sizes[1])
+	n_top_comms = len(community_sizes[0])
+	n_bottom_comms = len(community_sizes[1])
+	
+	i = 0
+	j = 0
+	comm_labels = {}  ## This dict will give node id: community label with numbering sequentially across both modes, starting from 0.
+	## That is, the first node in the bottom set has id n_top and the first bottom community has id len(community_prefs[0]).
+	for m in community_sizes:
+		for c in m:
+			for n in range(c):
+				comm_labels[i] = j
+				i += 1
+			j += 1
+	
+	## Reverse this dict to get a list of node ids within each community label.
+	comm_nodes = {}
+	for k in comm_labels:
+		if comm_nodes.get(comm_labels[k]):
+			comm_nodes[comm_labels[k]].append(k)
+		else:
+			comm_nodes[comm_labels[k]] = [k]
 	
 	## Sample the top nodes for each edge.
 	source_nodes = np.random.choice(n_top,size=n_edges)
+	
+	## Calculate the probability to determine the community of the bottom node for each edge.
 	comm_probs = np.random.rand(n_edges)
+	
+	## Turn the probabilities into communities to target.
+	target_comms = [np.argwhere(community_prefs[0][comm_labels[source_nodes[i]]] - p > 0)[0][0] + n_top_comms for i,p in enumerate(comm_probs)]
+	
+	## Sample the target nodes from the communities.
+	target_nodes = [np.random.choice[comm_nodes[c]] for c in target_comms]
+	
+	## Check for multiple edges if required.
 
 	code.interact(local=locals())
 
